@@ -1,4 +1,4 @@
-setupGeolocation <- function() {
+setupGeolocation <- function(forceGeoLight = FALSE) {
 
   reqPackages <- c("devtools","digest","geosphere","raster","fields","forecast",
                    "circular","truncnorm","parallel","bit","rgdal","CircStats","Rcpp", "grid",
@@ -28,7 +28,7 @@ setupGeolocation <- function() {
   if(any("SGAT"%in%get.packages)) install_github("SWotherspoon/SGAT"); library(SGAT)
   if(any("TwGeos"%in%get.packages)) install_github("SLisovski/TwGeos") ; library(TwGeos)
   if(any("PolarGeolocation"%in%get.packages)) install_github("SLisovski/PolarGeolocation"); library(PolarGeolocation)
-  install_github("SLisovski/GeoLight", ref = "Update_2.01", force = T); library(GeoLight)
+  if(forceGeoLight || any("GeoLight"%in%get.packages)) install_github("SLisovski/GeoLight", ref = "Update_2.01", force = T); library(GeoLight)
   if(any("FLightR"%in%get.packages)) install_github("eldarrak/FLightR"); library(FLightR)
 
   message("You are all set!")
@@ -64,48 +64,7 @@ findHEZenith <- function(twl, tol = 0.08, range=c(250,400)){
 }
 
 
-
-makeGrid <- function(lon = c(-180, 180), lat = c(-90, 90), cell.size = 1, mask = "sea", pacific = FALSE) {
-  data(wrld_simpl, package = "maptools", envir = environment())
-  if(pacific){
-    wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
-  nrows <- abs(lat[2L] - lat[1L]) / cell.size
-  ncols <- abs(lon[2L] - lon[1L]) / cell.size
-  grid <- raster(
-    nrows = nrows,
-    ncols = ncols,
-    xmn = min(lon),
-    xmx = max(lon),
-    ymn = min(lat),
-    ymx = max(lat),
-    crs = proj4string(wrld_simpl)
-  )
-  grid <- rasterize(wrld_simpl, grid, 1, silent = TRUE)
-  grid <- is.na(grid)
-  switch(mask,
-         sea = {},
-         land = {
-           grid <- subs(grid, data.frame(c(0,1), c(1,0)))},
-         none = {
-           grid <- subs(grid, data.frame(c(0,1), c(1,1)))
-         }
-  )
-  return(grid)
-}
-
-
-land.mask <- function(xlim, ylim, cell.size = 1, land = TRUE, pacific = FALSE) {
-  r <- makeGrid(xlim, ylim, cell.size, ifelse(land, "land", "sea"), pacific = pacific)
-  r <- as.matrix(is.na(r))[nrow(r):1, ]
-  if (land)
-    r <- !r
-  xbin <- seq(xlim[1], xlim[2], length = ncol(r) + 1)
-  ybin <- seq(ylim[1], ylim[2], length = nrow(r) + 1)
-
-  function(p) {
-    r[cbind(.bincode(p[, 2], ybin), .bincode(p[, 1], xbin))]
-  }
-}
+detach(package:GeoLocTools, unload = T)
 
 
 makeGroups <- function(grouped){
