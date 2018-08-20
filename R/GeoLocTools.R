@@ -64,8 +64,6 @@ findHEZenith <- function(twl, tol = 0.08, range=c(250,400)){
 }
 
 
-detach(package:GeoLocTools, unload = T)
-
 
 makeGroups <- function(grouped){
   g <- rep(0, length(grouped))
