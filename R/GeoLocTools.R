@@ -2,13 +2,13 @@ setupGeolocation <- function(forceGeoLight = FALSE) {
 
   reqPackages <- c("devtools","digest","geosphere","raster","fields","forecast",
                    "circular","truncnorm","parallel","bit","rgdal","CircStats","Rcpp", "grid",
-                   "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS")
+                   "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS", "svglite")
 
   ### CRAN
   get.packages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 
   if(length(get.packages)>0){
-    install.packages(get.packages,repos = "https://cloud.r-project.org/", dependencies = TRUE)
+    install.packages(get.packages, repos = "https://cloud.r-project.org/", dependencies = TRUE)
   }
 
   library(devtools)
@@ -17,7 +17,6 @@ setupGeolocation <- function(forceGeoLight = FALSE) {
   library(MASS)
 
   message("All nessesary packges available from CRAN are installed!")
-
 
   # Install necessary packages from Github using the devtools library #
 
