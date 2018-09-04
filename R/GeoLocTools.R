@@ -20,11 +20,12 @@ setupGeolocation <- function(forceGeoLight = FALSE) {
 
   # Install necessary packages from Github using the devtools library #
 
-  reqGitHPackages <- c("SGAT","TwGeos", "PolarGeolocation","GeoLight", "FLightR")
+  reqGitHPackages <- c("SGAT","TwGeos", "PolarGeolocation","GeoLight", "FLightR", "probGLS")
   get.packages    <- reqGitHPackages[!(reqGitHPackages %in% installed.packages()[,"Package"])]
 
   library(devtools)
   if(any("SGAT"%in%get.packages)) install_github("SWotherspoon/SGAT"); library(SGAT)
+  if(any("probGLS"%in%get.packages)) install_github("benjamin-merkel/probGLS"); library(probGLS)
   if(any("TwGeos"%in%get.packages)) install_github("SLisovski/TwGeos") ; library(TwGeos)
   if(any("PolarGeolocation"%in%get.packages)) install_github("SLisovski/PolarGeolocation"); library(PolarGeolocation)
   if(forceGeoLight || any("GeoLight"%in%get.packages)) install_github("SLisovski/GeoLight", ref = "Update_2.01", force = T); library(GeoLight)
