@@ -1,4 +1,4 @@
-# Light level geolocator tools
+# Tools for light level geolocation
 
 GeoLocTools provides tools for the analysis of geolocator data that can be used in combination with most analysis tools like _GeoLight_, _SGAT_, _FLightR_ etc.
 
