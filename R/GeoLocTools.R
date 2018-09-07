@@ -114,7 +114,7 @@ makeGrid <- function(lon = c(-180, 180), lat = c(-90, 90), cell.size = 1, mask =
 }
 
 
-land.mask <- function(xlim, ylim, cell.size = 1, land = TRUE, pacific = FALSE) {
+landMask <- function(xlim, ylim, cell.size = 1, land = TRUE, pacific = FALSE) {
   r <- makeGrid(xlim, ylim, cell.size, ifelse(land, "land", "sea"), pacific = pacific)
   r <- as.matrix(is.na(r))[nrow(r):1, ]
   if (land)
@@ -125,5 +125,41 @@ land.mask <- function(xlim, ylim, cell.size = 1, land = TRUE, pacific = FALSE) {
   function(p) {
     r[cbind(.bincode(p[, 2], ybin), .bincode(p[, 1], xbin))]
   }
+}
+
+maskStack <- function(xlim, ylim, behav, n = 2) {
+  # This ensures that the bird can fly over sea during the movement period,
+  # but that when it is stationary, it must be on land. To do so, we create a
+  # rater where the bird can go anywhere, and one where it is restricted to land.
+  # Then we tell it to lookup any given lat lon on either depending on whether
+  # the bird is moving or not.
+
+  #create an empty raster
+  r <- raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
+              xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
+  ## land for stationary periods
+  rs <- cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
+              rasterize(wrld_simpl, r, 1, silent = TRUE),
+              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
+  # anywhere for migratory periods
+  rm <- rs
+  rm[] <- 1
+
+  st    <- stack(rs, rm)
+  index <- ifelse(behav, 1, 2)
+
+  list(index = index, mask = st)
+}
+
+
+
+maskExtractor <- function(s) {
+
+  xbin  <- seq(xmin(s$mask),xmax(s$mask),length=ncol(s$mask)+1)
+  ybin  <- seq(ymin(s$mask),ymax(s$mask),length=nrow(s$mask)+1)
+  mask  <- as.array(s$mask)[nrow(s$mask):1,,sort(unique(s$index)),drop=FALSE]
+  index <- s$index
+
+  function(p) mask[cbind(.bincode(p[,2],ybin),.bincode(p[,1],xbin),index)]
 }
 
