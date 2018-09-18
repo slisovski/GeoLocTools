@@ -10,6 +10,7 @@ setupGeolocation <- function(force = NULL) {
   if(length(get.packages)>0){
     install.packages(get.packages, repos = "https://cloud.r-project.org/", dependencies = TRUE, force = T)
   }
+  data(wrld_simpl)
 
   null <- suppressMessages(lapply(reqPackages, require, character.only = TRUE))
 
