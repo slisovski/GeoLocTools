@@ -1,35 +1,33 @@
-setupGeolocation <- function(forceGeoLight = FALSE) {
+setupGeolocation <- function(force = NULL) {
 
-  reqPackages <- c("devtools","digest","geosphere","raster","fields","forecast",
+  reqPackages <- c("devtools","digest","geosphere","raster","fields","forecast", "mapdata",
                    "circular","truncnorm","parallel","bit","rgdal","CircStats","Rcpp", "grid",
                    "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS", "svglite")
 
   ### CRAN
-  get.packages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
+  get.packages <- reqPackages[!(reqPackages%in%installed.packages()[,"Package"])]
 
   if(length(get.packages)>0){
-    install.packages(get.packages, repos = "https://cloud.r-project.org/", dependencies = TRUE)
+    install.packages(get.packages, repos = "https://cloud.r-project.org/", dependencies = TRUE, force = T)
   }
 
-  library(devtools)
-  library(GeoLight)
-  library(maptools); data(wrld_simpl)
-  library(MASS)
-
-  message("All nessesary packges available from CRAN are installed!")
+  null <- suppressMessages(lapply(reqPackages, require, character.only = TRUE))
 
   # Install necessary packages from Github using the devtools library #
 
   reqGitHPackages <- c("SGAT","TwGeos", "PolarGeolocation","GeoLight", "FLightR", "probGLS")
   get.packages    <- reqGitHPackages[!(reqGitHPackages %in% installed.packages()[,"Package"])]
 
-  library(devtools)
-  if(any("SGAT"%in%get.packages)) install_github("SWotherspoon/SGAT"); library(SGAT)
-  if(any("probGLS"%in%get.packages)) install_github("benjamin-merkel/probGLS"); library(probGLS)
-  if(any("TwGeos"%in%get.packages)) install_github("SLisovski/TwGeos") ; library(TwGeos)
-  if(any("PolarGeolocation"%in%get.packages)) install_github("SLisovski/PolarGeolocation"); library(PolarGeolocation)
-  if(forceGeoLight || any("GeoLight"%in%get.packages)) install_github("SLisovski/GeoLight", ref = "Update_2.01", force = T); library(GeoLight)
-  if(any("FLightR"%in%get.packages)) install_github("eldarrak/FLightR"); library(FLightR)
+  if(!("GeoLight"%in%get.packages)) {
+    GL_version <- installed.packages()[as.character(installed.packages()[,"Package"])=="GeoLight",c("Package", "Version")]
+  } else GL_version = NULL
+
+  if(any("SGAT"%in%get.packages)) install_github("SWotherspoon/SGAT"); suppressMessages(library(SGAT))
+  if(any("probGLS"%in%get.packages)) install_github("benjamin-merkel/probGLS"); suppressMessages(library(probGLS))
+  if(any("TwGeos"%in%get.packages)) install_github("SLisovski/TwGeos") ; suppressMessages(library(TwGeos))
+  if(any("PolarGeolocation"%in%get.packages)) install_github("SLisovski/PolarGeolocation"); suppressMessages(library(PolarGeolocation))
+  if(any("GeoLight"%in%get.packages) | (!is.null(GL_version) & GL_version[2]!="2.0.1")) install_github("SLisovski/GeoLight", ref = "Update_2.01", force = T); suppressMessages(library(GeoLight))
+  if(any("FLightR"%in%get.packages)) install_github("eldarrak/FLightR"); suppressMessages(library(FLightR))
 
   message("You are all set!")
 
