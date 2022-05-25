@@ -16,20 +16,51 @@ setupGeolocation <- function(force = NULL) {
 
   # Install necessary packages from Github using the devtools library #
 
-  reqGitHPackages <- c("SGAT","TwGeos", "PolarGeolocation","GeoLight", "FLightR", "probGLS")
+  reqGitHPackages <- c("SGAT", "TwGeos", "PolarGeolocation", "GeoLight", "FLightR", "probGLS")
   get.packages    <- reqGitHPackages[!(reqGitHPackages %in% installed.packages()[,"Package"])]
 
-  if(!("GeoLight"%in%get.packages)) {
-    GL_version <- installed.packages()[as.character(installed.packages()[,"Package"])=="GeoLight",c("Package", "Version")]
-  } else GL_version = NULL
-
-  if(any("SGAT"%in%get.packages)) install_github("SWotherspoon/SGAT"); suppressMessages(library(SGAT))
-  if(any("probGLS"%in%get.packages)) install_github("benjamin-merkel/probGLS"); suppressMessages(library(probGLS))
-  if(any("TwGeos"%in%get.packages)) install_github("SLisovski/TwGeos") ; suppressMessages(library(TwGeos))
-  if(any("PolarGeolocation"%in%get.packages)) install_github("SLisovski/PolarGeolocation"); suppressMessages(library(PolarGeolocation))
-  if(any("GeoLight"%in%get.packages) | (!is.null(GL_version) & GL_version[2]!="2.0.1")) install_github("SLisovski/GeoLight", ref = "Update_2.01", force = T); suppressMessages(library(GeoLight))
-  if(any("FLightR"%in%get.packages)) install_github("eldarrak/FLightR"); suppressMessages(library(FLightR))
-
+  if(any("GeoLight"%in%get.packages)) {
+    cat("Install and load R package GeoLight from GitHub.")
+    suppressMessages({
+    install_github("SLisovski/GeoLight", quiet = T)
+    suppressMessages(library(GeoLight))})
+    cat(" ..... Done!\n")
+  } else suppressMessages(library(GeoLight))
+  if(any("SGAT"%in%get.packages)) {
+    cat("Install and load R package SGAT from GitHub.")
+    suppressMessages({
+      install_github("SWotherspoon/SGAT", quiet = T)
+      suppressMessages(library(SGAT))})
+    cat(" ..... Done!\n")
+  } else suppressMessages(library(SGAT))
+  if(any("probGLS"%in%get.packages)) {
+    cat("Install and load R package probGLS from GitHub.")
+    suppressMessages({
+      install_github("benjamin-merkel/probGLS", quiet = T)
+      suppressMessages(library(probGLS))})
+    cat(" ..... Done!\n")
+  } else suppressMessages(library(probGLS))
+  if(any("TwGeos"%in%get.packages)) {
+    cat("Install and load R package TwGeos from GitHub.")
+    suppressMessages({
+      install_github("SLisovski/TwGeos", quiet = T)
+      suppressMessages(library(TwGeos))})
+    cat(" ..... Done!\n")
+  } else suppressMessages(library(TwGeos))
+  if(any("PolarGeolocation"%in%get.packages)) {
+    cat("Install and load R package PolarGeolocation from GitHub.")
+    suppressMessages({
+      install_github("SLisovski/PolarGeolocation", quiet = T)
+      suppressMessages(library(PolarGeolocation))})
+    cat(" ..... Done!\n")
+  } else suppressMessages(library(PolarGeolocation))
+  if(any("FLightR"%in%get.packages)) {
+    cat("Install and load R package FLightR from GitHub.")
+    suppressMessages({
+      install_github("eldarrak/FLightR", quiet = T)
+      suppressMessages(library(FLightR))})
+    cat(" ..... Done!\n")
+  } else suppressMessages(library(FLightR))
   message("You are all set!")
 
 }
@@ -62,8 +93,6 @@ findHEZenith <- function(twl, tol = 0.08, range=c(250,400)){
 
 }
 
-
-
 makeGroups <- function(grouped){
   g <- rep(0, length(grouped))
   while(any(g<1)) {
@@ -81,8 +110,6 @@ makeGroups <- function(grouped){
   }
   return(g)
 }
-
-
 
 makeGrid <- function(lon = c(-180, 180), lat = c(-90, 90), cell.size = 1, mask = "sea", pacific = FALSE) {
   data(wrld_simpl, package = "maptools", envir = environment())

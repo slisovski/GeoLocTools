@@ -19,8 +19,3 @@ install.packages("devtools")
 ```
 
 GeoLocTools otherwise does not need devtools for normal use.)
-
-
-## TODO
-
-- Almost everything
