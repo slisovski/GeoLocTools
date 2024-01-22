@@ -2,7 +2,8 @@ setupGeolocation <- function(force = NULL) {
 
   reqPackages <- c("devtools","digest","geosphere","raster","fields","forecast", "mapdata",
                    "circular","truncnorm","parallel","bit","rgdal","CircStats","Rcpp", "grid",
-                   "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS", "svglite", "terra")
+                   "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS", "svglite", "terra",
+                   "sf", "rnaturalearth", "magrittr")
 
   ### CRAN
   get.packages <- reqPackages[!(reqPackages%in%installed.packages()[,"Package"])]
@@ -154,7 +155,7 @@ return(grid)
 
 landMask <- function(xlim, ylim, cell.size = 1, land = TRUE, pacific = FALSE) {
   r <- makeGrid(xlim, ylim, cell.size, ifelse(land, "land", "sea"), pacific = pacific)
-  r <- as.matrix(is.na(r))[nrow(r):1, ]
+  r <- as.matrix(is.na(r), wide = TRUE)[nrow(r):1, ]
   if (land)
     r <- !r
   xbin <- seq(xlim[1], xlim[2], length = ncol(r) + 1)
@@ -172,32 +173,35 @@ maskStack <- function(xlim, ylim, behav, n = 2) {
   # Then we tell it to lookup any given lat lon on either depending on whether
   # the bird is moving or not.
 
+  world_pacific_vect <- rnaturalearth::ne_countries(
+    scale = "small",
+    returnclass = "sf")  %>%
+    st_break_antimeridian(lon_0 = 180) %>% # insert this before transformation
+    st_transform(crs = "+proj=longlat +lon_0=180") %>%
+    vect()
+
   #create an empty raster
-  r <- raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
-              xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
-  ## land for stationary periods
-  rs <- cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
-              rasterize(wrld_simpl, r, 1, silent = TRUE),
-              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
+  r.atlantic <- rast(nrows = n * diff(ylim),
+                     ncols = n * diff(xlim),
+                     xmin = xlim[1],
+                     xmax = xlim[2],
+                     ymin = ylim[1],
+                     ymax = ylim[2],
+                     crs = crs(world_vect))
+
+  r.pacific <- rast(world_pacific_vect,
+                    nrows = n * diff(ylim),
+                    ncols = n * diff(xlim))
+
+  world.pacific.rast <- terra::rasterize(world_pacific_vect, r.pacific, field = 1, silent = TRUE)
+
   # anywhere for migratory periods
-  rm <- rs
+  rm <- world.pacific.rast
   rm[] <- 1
 
-  st    <- stack(rs, rm)
-  index <- ifelse(behav, 1, 2)
+  st    <- c(world.pacific.rast, rm)
+  index <- ifelse(behav, 1, 2) #what is behav?
 
   list(index = index, mask = st)
-}
-
-
-
-maskExtractor <- function(s) {
-
-  xbin  <- seq(xmin(s$mask),xmax(s$mask),length=ncol(s$mask)+1)
-  ybin  <- seq(ymin(s$mask),ymax(s$mask),length=nrow(s$mask)+1)
-  mask  <- as.array(s$mask)[nrow(s$mask):1,,sort(unique(s$index)),drop=FALSE]
-  index <- s$index
-
-  function(p) mask[cbind(.bincode(p[,2],ybin),.bincode(p[,1],xbin),index)]
 }
 
