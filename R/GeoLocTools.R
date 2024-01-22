@@ -2,7 +2,7 @@ setupGeolocation <- function(force = NULL) {
 
   reqPackages <- c("devtools","digest","geosphere","raster","fields","forecast", "mapdata",
                    "circular","truncnorm","parallel","bit","rgdal","CircStats","Rcpp", "grid",
-                   "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS", "svglite")
+                   "RcppArmadillo","ggmap","ggsn","sp","maptools","rgeos","MASS", "svglite", "terra")
 
   ### CRAN
   get.packages <- reqPackages[!(reqPackages%in%installed.packages()[,"Package"])]
@@ -112,31 +112,43 @@ makeGroups <- function(grouped){
 }
 
 makeGrid <- function(lon = c(-180, 180), lat = c(-90, 90), cell.size = 1, mask = "sea", pacific = FALSE) {
-  data(wrld_simpl, package = "maptools", envir = environment())
-  if(pacific){
-    wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
-  nrows <- abs(lat[2L] - lat[1L]) / cell.size
-  ncols <- abs(lon[2L] - lon[1L]) / cell.size
-  grid <- raster(
-    nrows = nrows,
-    ncols = ncols,
-    xmn = min(lon),
-    xmx = max(lon),
-    ymn = min(lat),
-    ymx = max(lat),
-    crs = proj4string(wrld_simpl)
-  )
-  grid <- rasterize(wrld_simpl, grid, 1, silent = TRUE)
-  grid <- is.na(grid)
-  switch(mask,
-         sea = {},
-         land = {
-           grid <- subs(grid, data.frame(c(0,1), c(1,0)))},
-         none = {
-           grid <- subs(grid, data.frame(c(0,1), c(1,1)))
-         }
-  )
-  return(grid)
+
+world <- rnaturalearth::ne_countries(
+  scale = "small",
+  returnclass = "sf")
+
+if(pacific) {
+  world <- world %>%
+    st_break_antimeridian(lon_0 = 180) %>% # insert this before transformation
+    st_transform(crs = "+proj=longlat +lon_0=180")
+}
+
+nrows <- abs(lat[2L] - lat[1L]) / cell.size
+ncols <- abs(lon[2L] - lon[1L]) / cell.size
+
+grid <- rast(
+  nrows = nrows,
+  ncols = ncols,
+  xmin = min(lon),
+  xmax = max(lon),
+  ymin = min(lat),
+  ymax = max(lat),
+  crs = crs(world)
+)
+
+grid <- rasterize(world, grid, field = 1, silent = TRUE)
+grid <- is.na(grid)
+
+switch(mask,
+       sea = {},
+       land = {
+         grid <- subst(grid, from = c(0,1), to = c(1,0))
+       },
+       none = {
+         grid <- subst(grid, from = c(0,1), to = c(1,1))
+       }
+)
+return(grid)
 }
 
 
@@ -156,7 +168,7 @@ landMask <- function(xlim, ylim, cell.size = 1, land = TRUE, pacific = FALSE) {
 maskStack <- function(xlim, ylim, behav, n = 2) {
   # This ensures that the bird can fly over sea during the movement period,
   # but that when it is stationary, it must be on land. To do so, we create a
-  # rater where the bird can go anywhere, and one where it is restricted to land.
+  # raster where the bird can go anywhere, and one where it is restricted to land.
   # Then we tell it to lookup any given lat lon on either depending on whether
   # the bird is moving or not.
 
